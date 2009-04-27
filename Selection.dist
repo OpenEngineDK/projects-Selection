@@ -5,8 +5,8 @@ darcs / http://openengine.dk/code/openengine
 darcs-dev / fh.daimi.au.dk:/users/cgd/code/openengine
 
 # Selection test project
-#darcs /projects/Selection http://openengine.dk/code/projects/Selection
-#darcs-dev /projects/Selection fh.daimi.au.dk:/users/cgd/code/projects/Selection
+darcs /projects/Selection http://openengine.dk/code/projects/Selection
+darcs-dev /projects/Selection fh.daimi.au.dk:/users/cgd/code/projects/Selection
 
 # standard set of extensions
 darcs /extensions/SDL             http://openengine.dk/code/extensions/SDL
