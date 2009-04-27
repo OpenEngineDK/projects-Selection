@@ -38,7 +38,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
   Extensions_GenericHandlers
   Extensions_OBJResource
   Extensions_SDLImage
-  Extensions_TGAResource
+  #Extensions_TGAResource
   Extensions_OpenGLRenderer
   Extensions_SDL
   Extensions_OpenGLSelection

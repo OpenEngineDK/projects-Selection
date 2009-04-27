@@ -42,7 +42,7 @@
 #include <Resources/ITextureResource.h>
 #include <Resources/SDLImage.h>
 #include <Resources/OBJResource.h>
-#include <Resources/TGAResource.h>
+//#include <Resources/TGAResource.h>
 
 // Scene structures
 #include <Scene/ISceneNode.h>
@@ -170,13 +170,13 @@ void SetupResources(Config& config) {
     // set the resources directory
     // @todo we should check that this path exists
     // set the resources directory
-    string resources = "projects/Selector/data/";
+    string resources = "projects/Selection/data/";
     DirectoryManager::AppendPath(resources);
 
     // load resource plug-ins
     ResourceManager<IModelResource>::AddPlugin(new OBJPlugin());
-    //ResourceManager<ITextureResource>::AddPlugin(new SDLImagePlugin());
-    ResourceManager<ITextureResource>::AddPlugin(new TGAPlugin());
+    ResourceManager<ITextureResource>::AddPlugin(new SDLImagePlugin());
+    //ResourceManager<ITextureResource>::AddPlugin(new TGAPlugin());
 }
 
 void SetupDisplay(Config& config) {
