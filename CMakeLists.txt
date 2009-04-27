@@ -11,7 +11,6 @@ SET( PROJECT_SOURCES
   CamRayNode.cpp
   LineNode.cpp
   SphereNode.cpp
-  SelectionHandler.cpp
 )
 
 # Include needed to use SDL under Mac OS X
