@@ -65,13 +65,15 @@
 
 
 // project stuff
-#include <Utils/MouseSelector.h>
+//#include <Utils/MouseSelector.h>
+#include <Utils/MouseSelection.h>
+#include <Utils/SelectionSet.h>
 //#include "CursorNode.h"
 #include "AxisNode.h"
 //#include "CamRayNode.h"
 //#include "LineNode.h"
-#include "SphereNode.h"
-#include <Utils/TransformationSelector.h>
+//#include "SphereNode.h"
+//#include <Utils/TransformationSelector.h>
 
 // Additional namespaces
 using namespace OpenEngine::Core;
@@ -94,8 +96,8 @@ struct Config {
     IMouse*                 mouse;
     IKeyboard*              keyboard;
     ISceneNode*             scene;
-    MouseSelector*          ms;
-    TransformationSelector* ts;
+    MouseSelection*          ms;
+    //    TransformationSelector* ts;
     OpenEngine::Renderers::TextureLoader* textureLoader;
 
     Config(IEngine& engine)
@@ -110,7 +112,7 @@ struct Config {
         , keyboard(NULL)
         , scene(NULL)        
         , ms(NULL)
-        , ts(NULL)
+          //        , ts(NULL)
         , textureLoader(NULL)
     {}
 };
@@ -190,7 +192,7 @@ void SetupDisplay(Config& config) {
     config.frame         = new SDLFrame(800, 600, 32);
     config.viewingvolume = new ViewingVolume();//new InterpolatedViewingVolume(*(new ViewingVolume()));
     config.camera        = new Camera( *config.viewingvolume );
-    config.camera->SetPosition(Vector<3,float>(10,10,10));
+    config.camera->SetPosition(Vector<3,float>(100,100,100));
     config.camera->LookAt(Vector<3,float>(0,0,0));
     //config.frustum       = new Frustum(*config.camera, 20, 3000);
     config.viewport      = new Viewport(0,0,399,299);
@@ -235,8 +237,9 @@ void SetupRendering(Config& config) {
     config.renderer->ProcessEvent().Attach(*rv);
 
     // mouse selector stuff
-    config.ts = new TransformationSelector(NULL, config.renderer);
-    config.ms = new MouseSelector(*config.frame, *config.mouse, *config.ts);
+    //config.ts = new TransformationSelector(NULL, config.renderer);
+    SelectionSet<ISceneNode>* ss = new SelectionSet<ISceneNode>();
+    config.ms = new MouseSelection(*config.frame, *config.mouse, *ss, NULL);
     config.renderer->PostProcessEvent().Attach(*config.ms);
     config.mouse->MouseMovedEvent().Attach(*config.ms);
     config.mouse->MouseButtonEvent().Attach(*config.ms);
@@ -260,10 +263,11 @@ void SetupRendering(Config& config) {
     //add frustrum cameras
     int width = 800;
     int height = 600;
+    float dist = 100;
 
     // bottom right
     Camera* cam_br = new Camera(*(new ViewingVolume()));
-    cam_br->SetPosition(Vector<3,float>(0,0,50));
+    cam_br->SetPosition(Vector<3,float>(0,0,dist));
     cam_br->LookAt(0,0,0);
     Viewport* vp_br = new Viewport(width/2, 0, width,height/2);
     vp_br->SetViewingVolume(cam_br);
@@ -272,7 +276,7 @@ void SetupRendering(Config& config) {
 
     // top right
     Camera* cam_tr = new Camera(*(new ViewingVolume()));
-    cam_tr->SetPosition(Vector<3,float>(0,50,0));
+    cam_tr->SetPosition(Vector<3,float>(0,dist,0));
     cam_tr->LookAt(0,0,0);
     Viewport* vp_tr = new Viewport(width/2,height/2, width,height);
     vp_tr->SetViewingVolume(cam_tr);
@@ -281,7 +285,7 @@ void SetupRendering(Config& config) {
 
     // top left
     Camera* cam_tl = new Camera(*(new ViewingVolume()));
-    cam_tl->SetPosition(Vector<3,float>(50,0,0));
+    cam_tl->SetPosition(Vector<3,float>(dist,0,0));
     cam_tl->LookAt(0,0,0);
     Viewport* vp_tl = new Viewport(0,height/2, width/2,height);
     vp_tl->SetViewingVolume(cam_tl);
@@ -309,8 +313,8 @@ void SetupScene(Config& config) {
 //     curTrans->AddNode(curNode);
 //     config.scene->AddNode(curTrans);
 
-    AxisNode* axisNode = new AxisNode();
-    config.scene->AddNode(axisNode);
+    // AxisNode* axisNode = new AxisNode();
+    // config.scene->AddNode(axisNode);
 
 //     CamRayNode* camRayNode = new CamRayNode(*config.camera, *config.ms->GetCursorNode());
 //     config.scene->AddNode(camRayNode);
@@ -324,21 +328,20 @@ void SetupScene(Config& config) {
     // Load the model
     TransformationNode* t1 = new TransformationNode();
     TransformationNode* t2 = new TransformationNode();
-    t2->Scale(0.5,0.5,0.5);
+    //t2->Scale(0.5,0.5,0.5);
 
-    IModelResourcePtr mod_res = ResourceManager<IModelResource>::Create("FutureTank/model.obj");
+    IModelResourcePtr mod_res = ResourceManager<IModelResource>::Create("Dragon/DragonHead.obj");
     mod_res->Load();
     t1->AddNode(mod_res->GetSceneNode());
-
     mod_res->Unload();
+    mod_res = ResourceManager<IModelResource>::Create("Dragon/DragonJaw.obj");
     mod_res->Load();
-
     t2->AddNode(mod_res->GetSceneNode());
 
     config.scene->AddNode(t1);
     config.scene->AddNode(t2);
 
-    config.ts->SetRoot(config.scene);
+    config.ms->SetScene(config.scene);
 
 
     config.textureLoader->Load(*config.scene);
