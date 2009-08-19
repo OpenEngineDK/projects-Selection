@@ -35,3 +35,4 @@ linux /libraries http://openengine.dk/data/libraries/sdlimage-linux32.zip
 
 # data
 any /projects/Selection/data http://openengine.dk/data/models/FutureTank.zip
+any /projects/Selection/data http://openengine.dk/data/images/Buttons.tar.gz
