@@ -73,7 +73,10 @@
 //#include "CamRayNode.h"
 //#include "LineNode.h"
 //#include "SphereNode.h"
-//#include <Utils/TransformationSelector.h>
+#include <Utils/SelectionTool.h>
+#include <Utils/TransformationTool.h>
+#include <Utils/CameraTool.h>
+#include <Utils/ToolChain.h>
 
 // Additional namespaces
 using namespace OpenEngine::Core;
@@ -236,15 +239,6 @@ void SetupRendering(Config& config) {
     IRenderingView* rv = new OpenGL::RenderingView(*config.viewport);
     config.renderer->ProcessEvent().Attach(*rv);
 
-    // mouse selector stuff
-    //config.ts = new TransformationSelector(NULL, config.renderer);
-    SelectionSet<ISceneNode>* ss = new SelectionSet<ISceneNode>();
-    config.ms = new MouseSelection(*config.frame, *config.mouse, *ss, NULL);
-    config.renderer->PostProcessEvent().Attach(*config.ms);
-    config.mouse->MouseMovedEvent().Attach(*config.ms);
-    config.mouse->MouseButtonEvent().Attach(*config.ms);
-
-
     // Add rendering initialization tasks
     config.textureLoader = new OpenEngine::Renderers::TextureLoader(*config.renderer);
     config.renderer->PreProcessEvent().Attach(*config.textureLoader);
@@ -259,6 +253,23 @@ void SetupRendering(Config& config) {
     config.engine.ProcessEvent().Attach(*config.renderer);
     config.engine.DeinitializeEvent().Attach(*config.renderer);
 
+    // mouse selector stuff
+    SelectionSet<ISceneNode>* ss = new SelectionSet<ISceneNode>();
+    config.ms = new MouseSelection(*config.frame, *config.mouse, NULL);
+
+    TransformationTool* tt = new TransformationTool(*config.textureLoader);
+    ss->ChangedEvent().Attach(*tt);
+    CameraTool* ct   = new CameraTool();
+    ToolChain* tc    = new ToolChain();
+    SelectionTool* st = new SelectionTool(*ss);
+    tc->PushBackTool(ct);
+    tc->PushBackTool(tt);
+    tc->PushBackTool(st);
+
+    config.renderer->PostProcessEvent().Attach(*config.ms);
+    config.mouse->MouseMovedEvent().Attach(*config.ms);
+    config.mouse->MouseButtonEvent().Attach(*config.ms);
+    config.keyboard->KeyEvent().Attach(*config.ms);
 
     //add frustrum cameras
     int width = 800;
@@ -273,7 +284,6 @@ void SetupRendering(Config& config) {
     vp_br->SetViewingVolume(cam_br);
     OpenGL::RenderingView* rv_br = new OpenGL::RenderingView(*vp_br);
     config.renderer->ProcessEvent().Attach(*rv_br);
-
     // top right
     Camera* cam_tr = new Camera(*(new ViewingVolume()));
     cam_tr->SetPosition(Vector<3,float>(0,dist,0));
@@ -292,10 +302,10 @@ void SetupRendering(Config& config) {
     OpenGL::RenderingView* rv_tl = new OpenGL::RenderingView(*vp_tl);
     config.renderer->ProcessEvent().Attach(*rv_tl);
 
-    config.ms->AddViewport(config.viewport);
-    config.ms->AddViewport(vp_br);
-    config.ms->AddViewport(vp_tl);
-    config.ms->AddViewport(vp_tr);
+    config.ms->BindTool(config.viewport, tc);
+    config.ms->BindTool(vp_br, tc);
+    config.ms->BindTool(vp_tl, tc);
+    config.ms->BindTool(vp_tr, tc);
 
 }
 
