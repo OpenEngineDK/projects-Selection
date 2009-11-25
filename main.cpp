@@ -42,7 +42,7 @@
 #include <Resources/ITextureResource.h>
 #include <Resources/SDLImage.h>
 #include <Resources/OBJResource.h>
-//#include <Resources/TGAResource.h>
+#include <Resources/SDLFont.h>
 
 // Scene structures
 #include <Scene/ISceneNode.h>
@@ -181,7 +181,7 @@ void SetupResources(Config& config) {
     // load resource plug-ins
     ResourceManager<IModelResource>::AddPlugin(new OBJPlugin());
     ResourceManager<ITextureResource>::AddPlugin(new SDLImagePlugin());
-    //ResourceManager<ITextureResource>::AddPlugin(new TGAPlugin());
+    ResourceManager<IFontResource>::AddPlugin(new SDLFontPlugin());
 }
 
 void SetupDisplay(Config& config) {
