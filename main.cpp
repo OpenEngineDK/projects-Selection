@@ -42,7 +42,8 @@
 #include <Resources/ITextureResource.h>
 #include <Resources/SDLImage.h>
 #include <Resources/OBJResource.h>
-#include <Resources/SDLFont.h>
+//#include <Resources/SDLFont.h>
+#include <Resources/CairoFont.h>
 
 // Scene structures
 #include <Scene/ISceneNode.h>
@@ -181,7 +182,7 @@ void SetupResources(Config& config) {
     // load resource plug-ins
     ResourceManager<IModelResource>::AddPlugin(new OBJPlugin());
     ResourceManager<ITextureResource>::AddPlugin(new SDLImagePlugin());
-    ResourceManager<IFontResource>::AddPlugin(new SDLFontPlugin());
+    ResourceManager<IFontResource>::AddPlugin(new CairoFontPlugin());
 }
 
 void SetupDisplay(Config& config) {

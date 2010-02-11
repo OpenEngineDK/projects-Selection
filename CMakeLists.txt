@@ -42,5 +42,6 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
   Extensions_OpenGLRenderer
   Extensions_SDL
   Extensions_OpenGLSelection
-  Extensions_SDLFont
+  #Extensions_SDLFont
+  Extensions_CairoResource
 )

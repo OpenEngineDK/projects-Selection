@@ -14,14 +14,14 @@ darcs /extensions/OpenGLRenderer  http://openengine.dk/code/extensions/OpenGLRen
 darcs /extensions/GenericHandlers http://openengine.dk/code/extensions/GenericHandlers
 darcs /extensions/OBJResource     http://openengine.dk/code/extensions/OBJResource
 darcs /extensions/SDLImage        http://openengine.dk/code/extensions/SDLImage
-darcs /extensions/SDLFont         http://openengine.dk/code/extensions/SDLFont
+darcs /extensions/CairoResource   http://openengine.dk/code/extensions/CairoResource
 darcs /extensions/OpenGLSelection http://openengine.dk/code/extensions/OpenGLSelection
 darcs-dev /extensions/SDL             fh.daimi.au.dk:/users/cgd/code/extensions/SDL
 darcs-dev /extensions/OpenGLRenderer  fh.daimi.au.dk:/users/cgd/code/extensions/OpenGLRenderer
 darcs-dev /extensions/GenericHandlers fh.daimi.au.dk:/users/cgd/code/extensions/GenericHandlers
 darcs-dev /extensions/OBJResource     fh.daimi.au.dk:/users/cgd/code/extensions/OBJResource
 darcs-dev /extensions/SDLImage     fh.daimi.au.dk:/users/cgd/code/extensions/SDLImage
-darcs-dev /extensions/SDLFont     fh.daimi.au.dk:/users/cgd/code/extensions/SDLFont
+darcs-dev /extensions/CairoResource   fh.daimi.au.dk:/users/cgd/code/extensions/CairoResource
 darcs-dev /extensions/OpenGLSelection  fh.daimi.au.dk:/users/cgd/code/extensions/OpenGLSelection
 
 # WINDOWS libraries
