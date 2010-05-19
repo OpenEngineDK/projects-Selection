@@ -20,14 +20,13 @@
 #include <Display/InterpolatedViewingVolume.h>
 #include <Display/ViewingVolume.h>
 // SDL implementation
-#include <Display/SDLFrame.h>
-#include <Devices/SDLInput.h>
+// #include <Display/SDLFrame.h>
+// #include <Devices/SDLInput.h>
 
 // Rendering structures
 #include <Scene/RenderNode.h>
 // OpenGL rendering implementation
 #include <Renderers/OpenGL/LightRenderer.h>
-//#include <Renderers/OpenGL/BufferedRenderer.h>
 #include <Renderers/OpenGL/Renderer.h>
 #include <Renderers/OpenGL/RenderingView.h>
 #include <Renderers/TextureLoader.h>
@@ -39,7 +38,7 @@
 #include <Resources/ResourceManager.h>
 
 // OBJ and TGA plugins
-#include <Resources/ITextureResource.h>
+#include <Resources/ITexture2D.h>
 #include <Resources/SDLImage.h>
 #include <Resources/OBJResource.h>
 //#include <Resources/SDLFont.h>
@@ -69,54 +68,55 @@
 //#include <Utils/MouseSelector.h>
 #include <Utils/MouseSelection.h>
 #include <Utils/SelectionSet.h>
-//#include "CursorNode.h"
-#include "AxisNode.h"
-//#include "CamRayNode.h"
-//#include "LineNode.h"
-//#include "SphereNode.h"
 #include <Utils/SelectionTool.h>
-#include <Utils/TransformationTool.h>
+//#include <Utils/TransformationTool.h>
 #include <Utils/CameraTool.h>
 #include <Utils/ToolChain.h>
+
+#include <Display/IRenderCanvas.h>
+#include <Display/OpenGL/RenderCanvas.h>
+#include <Display/OpenGL/ColorStereoCanvas.h>
+#include <Display/OpenGL/SplitScreenCanvas.h>
+#include <Display/IEnvironment.h>
+#include <Display/SDLEnvironment.h>
+//#include <Display/GLUTEnvironment.h>
+//#include <Core/GLUTEngine.h>
 
 // Additional namespaces
 using namespace OpenEngine::Core;
 using namespace OpenEngine::Logging;
 using namespace OpenEngine::Devices;
 using namespace OpenEngine::Display;
+using namespace OpenEngine::Display::OpenGL;
 using namespace OpenEngine::Renderers;
+using namespace OpenEngine::Renderers::OpenGL;
 using namespace OpenEngine::Resources;
 using namespace OpenEngine::Utils;
 
 // Configuration structure to pass around to the setup methods
 struct Config {
     IEngine&                engine;
-    IFrame*                 frame;
-    Viewport*               viewport;
-    IViewingVolume*         viewingvolume;
-    Camera*                 camera;
-    Frustum*                frustum;
+    IEnvironment*           env;
+    IFrame&                 frame;
+    ICanvas*                canvas;
     IRenderer*              renderer;
     IMouse*                 mouse;
     IKeyboard*              keyboard;
     ISceneNode*             scene;
-    MouseSelection*          ms;
+    MouseSelection*         ms;
     //    TransformationSelector* ts;
     OpenEngine::Renderers::TextureLoader* textureLoader;
 
-    Config(IEngine& engine)
+    Config(IEngine& engine, IEnvironment* env, IFrame& frame)
         : engine(engine)
-        , frame(NULL)
-        , viewport(NULL)
-        , viewingvolume(NULL)
-        , camera(NULL)
-        , frustum(NULL)
+        , env(env)
+        , frame(frame)
+        , canvas(NULL)
         , renderer(NULL)
         , mouse(NULL)
         , keyboard(NULL)
         , scene(NULL)        
-        , ms(NULL)
-          //        , ts(NULL)
+        // , ms(NULL)
         , textureLoader(NULL)
     {}
 };
@@ -146,8 +146,9 @@ int main(int argc, char** argv) {
     logger.info << logger.end;
 
     // Create an engine and config object
-    Engine* engine = new Engine();
-    Config config(*engine);
+    IEngine* engine = new Engine();
+    IEnvironment* env = new SDLEnvironment(800, 600, 16);//, FRAME_FULLSCREEN);
+    Config config(*engine, env, env->CreateFrame());
 
     // Setup the engine
     SetupResources(config);
@@ -186,25 +187,12 @@ void SetupResources(Config& config) {
 }
 
 void SetupDisplay(Config& config) {
-    if (config.frame         != NULL ||
-        config.viewingvolume != NULL ||
-        config.camera        != NULL ||
-        config.frustum       != NULL ||
-        config.viewport      != NULL)
+    if (config.canvas        != NULL)
         throw Exception("Setup display dependencies are not satisfied.");
-
-    config.frame         = new SDLFrame(800, 600, 32);
-    config.viewingvolume = new ViewingVolume();//new InterpolatedViewingVolume(*(new ViewingVolume()));
-    config.camera        = new Camera( *config.viewingvolume );
-    config.camera->SetPosition(Vector<3,float>(100,100,100));
-    config.camera->LookAt(Vector<3,float>(0,0,0));
-    //config.frustum       = new Frustum(*config.camera, 20, 3000);
-    config.viewport      = new Viewport(0,0,399,299);
-    config.viewport->SetViewingVolume(config.camera);
-
-    config.engine.InitializeEvent().Attach(*config.frame);
-    config.engine.ProcessEvent().Attach(*config.frame);
-    config.engine.DeinitializeEvent().Attach(*config.frame);
+    
+    config.engine.InitializeEvent().Attach(*config.env);
+    config.engine.ProcessEvent().Attach(*config.env);
+    config.engine.DeinitializeEvent().Attach(*config.env);
 }
 
 void SetupDevices(Config& config) {
@@ -212,129 +200,108 @@ void SetupDevices(Config& config) {
         config.mouse    != NULL)
         throw Exception("Setup devices dependencies are not satisfied.");
     // Create the mouse and keyboard input modules
-    SDLInput* input = new SDLInput();
-    config.keyboard = input;
-    config.mouse = input;
+    config.keyboard = config.env->GetKeyboard();
+    config.mouse = config.env->GetMouse();
 
     // Bind the quit handler
     QuitHandler* quit_h = new QuitHandler(config.engine);
     config.keyboard->KeyEvent().Attach(*quit_h);
-
-    // Bind to the engine for processing time
-    config.engine.InitializeEvent().Attach(*input);
-    config.engine.ProcessEvent().Attach(*input);
-    config.engine.DeinitializeEvent().Attach(*input);
 }
 
 void SetupRendering(Config& config) {
-    if (config.viewport == NULL ||
-        config.renderer != NULL ||
-        config.camera == NULL)
+    if (config.renderer != NULL)
         throw Exception("Setup renderer dependencies are not satisfied.");
-
+    
+    // Create a root scene node
+    RenderStateNode* rsn = new RenderStateNode();
+    config.scene = rsn;
+    rsn->EnableOption(RenderStateNode::LIGHTING);
+    
     // Create a renderer
-    config.renderer = new OpenGL::Renderer(config.viewport);
-    //config.renderer = new BufferedRenderer(config.viewport);
+    config.renderer = new Renderer();
+    LightRenderer* lr = new LightRenderer();
+    config.renderer->PreProcessEvent().Attach(*lr);
 
     // Setup a rendering view
-    IRenderingView* rv = new OpenGL::RenderingView(*config.viewport);
+    IRenderingView* rv = new RenderingView();
     config.renderer->ProcessEvent().Attach(*rv);
 
     // Add rendering initialization tasks
     config.textureLoader = new OpenEngine::Renderers::TextureLoader(*config.renderer);
-    config.renderer->PreProcessEvent().Attach(*config.textureLoader);
-
-    //    DisplayListTransformer* dlt = new DisplayListTransformer(rv);
-    //    config.renderer->InitializeEvent().Attach(*dlt);
-
-    //    config.renderer->PreProcessEvent()
-    //    .Attach( *(new OpenEngine::Renderers::OpenGL::LightRenderer(*config.camera)) );
-
-    config.engine.InitializeEvent().Attach(*config.renderer);
-    config.engine.ProcessEvent().Attach(*config.renderer);
-    config.engine.DeinitializeEvent().Attach(*config.renderer);
+    config.textureLoader->SetDefaultReloadPolicy(OpenEngine::Renderers::TextureLoader::RELOAD_NEVER);
 
     // mouse selector stuff
     SelectionSet<ISceneNode>* ss = new SelectionSet<ISceneNode>();
-    config.ms = new MouseSelection(*config.frame, *config.mouse, NULL);
-
-    TransformationTool* tt = new TransformationTool(*config.textureLoader);
-    ss->ChangedEvent().Attach(*tt);
+    config.ms = new MouseSelection(/*config.frame,*/ *config.mouse, *config.keyboard);
+    config.renderer->PostProcessEvent().Attach(*config.ms);
+    // TransformationTool* tt = new TransformationTool(*config.textureLoader);
+    // ss->ChangedEvent().Attach(*tt);
     CameraTool* ct   = new CameraTool();
     ToolChain* tc    = new ToolChain();
     SelectionTool* st = new SelectionTool(*ss);
     tc->PushBackTool(ct);
-    tc->PushBackTool(tt);
+    // tc->PushBackTool(tt);
     tc->PushBackTool(st);
 
-    config.renderer->PostProcessEvent().Attach(*config.ms);
-    config.mouse->MouseMovedEvent().Attach(*config.ms);
-    config.mouse->MouseButtonEvent().Attach(*config.ms);
-    config.keyboard->KeyEvent().Attach(*config.ms);
+    config.renderer->PostProcessEvent().Attach(*st);
 
-    //add frustrum cameras
-    int width = 800;
-    int height = 600;
     float dist = 100;
+    IRenderCanvas* c1 = new ColorStereoCanvas();
+    Camera* cam = new Camera( *(new ViewingVolume()) );
+    cam->SetPosition(Vector<3,float>(100,100,100));
+    cam->LookAt(Vector<3,float>(0,0,0));
+    c1->SetViewingVolume(cam);
+    c1->SetRenderer(config.renderer);
+    c1->SetScene(config.scene);
 
-    // bottom right
-    Camera* cam_br = new Camera(*(new ViewingVolume()));
-    cam_br->SetPosition(Vector<3,float>(0,0,dist));
-    cam_br->LookAt(0,0,0);
-    Viewport* vp_br = new Viewport(width/2, 0, width,height/2);
-    vp_br->SetViewingVolume(cam_br);
-    OpenGL::RenderingView* rv_br = new OpenGL::RenderingView(*vp_br);
-    config.renderer->ProcessEvent().Attach(*rv_br);
-    // top right
-    Camera* cam_tr = new Camera(*(new ViewingVolume()));
-    cam_tr->SetPosition(Vector<3,float>(0,dist,0));
-    cam_tr->LookAt(0,0,0);
-    Viewport* vp_tr = new Viewport(width/2,height/2, width,height);
-    vp_tr->SetViewingVolume(cam_tr);
-    OpenGL::RenderingView* rv_tr = new OpenGL::RenderingView(*vp_tr);
-    config.renderer->ProcessEvent().Attach(*rv_tr);
+    IRenderCanvas* c2 = new RenderCanvas();
+    cam = new Camera( *new ViewingVolume() );
+    cam->SetPosition(Vector<3,float>(0,0,dist));
+    cam->LookAt(0,0,0);
+    c2->SetViewingVolume(cam);
+    c2->SetRenderer(config.renderer);
+    c2->SetScene(config.scene);
 
-    // top left
-    Camera* cam_tl = new Camera(*(new ViewingVolume()));
-    cam_tl->SetPosition(Vector<3,float>(dist,0,0));
-    cam_tl->LookAt(0,0,0);
-    Viewport* vp_tl = new Viewport(0,height/2, width/2,height);
-    vp_tl->SetViewingVolume(cam_tl);
-    OpenGL::RenderingView* rv_tl = new OpenGL::RenderingView(*vp_tl);
-    config.renderer->ProcessEvent().Attach(*rv_tl);
+    IRenderCanvas* c3 = new RenderCanvas();
+    cam = new Camera( *new ViewingVolume() );
+    cam->SetPosition(Vector<3,float>(0,dist,0));
+    cam->LookAt(0,0,0);
+    c3->SetViewingVolume(cam);
+    c3->SetRenderer(config.renderer);
+    c3->SetScene(config.scene);
 
-    config.ms->BindTool(config.viewport, tc);
-    config.ms->BindTool(vp_br, tc);
-    config.ms->BindTool(vp_tl, tc);
-    config.ms->BindTool(vp_tr, tc);
+    IRenderCanvas* c4 = new ColorStereoCanvas();
+    cam = new Camera( *new ViewingVolume() );
+    cam->SetPosition(Vector<3,float>(dist,0,0));
+    cam->LookAt(0,0,0);
+    c4->SetViewingVolume(cam);
+    c4->SetRenderer(config.renderer);
+    c4->SetScene(config.scene);
+
+    ICanvas* left  = new SplitScreenCanvas(*c1, *c2, SplitScreenCanvas::HORIZONTAL);
+    ICanvas* right = new SplitScreenCanvas(*c3, *c4, SplitScreenCanvas::HORIZONTAL);
+    config.canvas  = new SplitScreenCanvas(*left, *right);
+   
+    //config.frame.SetCanvas(config.canvas);
+    //config.frame.SetCanvas(left);
+    //config.frame.SetCanvas(right);
+    config.frame.SetCanvas(c1);
+    
+    config.ms->BindTool(c1, tc);
+    config.ms->BindTool(c2, tc);
+    config.ms->BindTool(c3, tc);
+    config.ms->BindTool(c4, tc);
+    // config.ms->BindTool(vp_br, tc);
+    // config.ms->BindTool(vp_tl, tc);
+    // config.ms->BindTool(vp_tr, tc);
 
 }
 
 void SetupScene(Config& config) {
-    if (config.scene  != NULL ||
+    if (config.scene  == NULL ||
         config.mouse  == NULL ||
         config.keyboard == NULL)
         throw Exception("Setup scene dependencies are not satisfied.");
-
-    // Create a root scene node
-    config.scene = new SceneNode();
-    
-//     TransformationNode* curTrans = config.ms->GetCursorNode();
-//     CursorNode* curNode          = new CursorNode();
-//     curTrans->AddNode(curNode);
-//     config.scene->AddNode(curTrans);
-
-    // AxisNode* axisNode = new AxisNode();
-    // config.scene->AddNode(axisNode);
-
-//     CamRayNode* camRayNode = new CamRayNode(*config.camera, *config.ms->GetCursorNode());
-//     config.scene->AddNode(camRayNode);
-
-//     TransformationNode* sphereTrans = new TransformationNode();
-//     SphereNode* sphereNode          = new SphereNode();
-//     sphereTrans->AddNode(sphereNode);
-//     config.scene->AddNode(sphereTrans);
-    
 
     // Load the model
     TransformationNode* t1 = new TransformationNode();
@@ -352,26 +319,18 @@ void SetupScene(Config& config) {
     config.scene->AddNode(t1);
     config.scene->AddNode(t2);
 
-    config.ms->SetScene(config.scene);
-
-
+    PointLightNode* light = new PointLightNode();
+    TransformationNode* lightTrans = new TransformationNode();
+    lightTrans->Move(0,1000,0);
+    lightTrans->AddNode(light);
+    config.scene->AddNode(lightTrans);
+        
+    // config.ms->SetScene(config.scene);
+    // config.renderer->InitializeEvent().Attach(*config.textureLoader);
     config.textureLoader->Load(*config.scene);
-    // Transform the scene to use vertex arrays
-    //VertexArrayTransformer vaT;
-    //vaT.Transform(*config.scene);
-
-    // Supply the scene to the renderer
-    config.renderer->SetSceneRoot(config.scene);
-
-    //config.textureLoader->SetDefaultReloadPolicy(OpenEngine::Renderers::TextureLoader::RELOAD_NEVER);
 }
 
 void SetupDebugging(Config& config) {
     // main engine events
-    // Visualization of the frustum
-    if (config.frustum != NULL) {
-        config.frustum->VisualizeClipping(true);
-        config.scene->AddNode(config.frustum->GetFrustumNode());
-    }
 }
 

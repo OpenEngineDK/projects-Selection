@@ -6,11 +6,11 @@ SET( PROJECT_NAME "Selection")
 SET( PROJECT_SOURCES
   # Add all the cpp source files here
   main.cpp
-  CursorNode.cpp
-  AxisNode.cpp
-  CamRayNode.cpp
-  LineNode.cpp
-  SphereNode.cpp
+  # CursorNode.cpp
+  # AxisNode.cpp
+  # CamRayNode.cpp
+  # LineNode.cpp
+  # SphereNode.cpp
 )
 
 # Include needed to use SDL under Mac OS X
@@ -41,6 +41,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
   #Extensions_TGAResource
   Extensions_OpenGLRenderer
   Extensions_SDL
+  #Extensions_GLUT
   Extensions_OpenGLSelection
   #Extensions_SDLFont
   Extensions_CairoResource
