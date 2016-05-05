@@ -1,28 +1,28 @@
 # OpenEngine Distribution file for Selector.
 
 # main repository
-darcs / http://openengine.dk/code/openengine
-darcs-dev / fh.daimi.au.dk:/users/cgd/code/openengine
+git / https://github.com/OpenEngineDK/openengine.git
+git-dev / git@github.com:OpenEngineDK/openengine.git
 
 # Selection test project
-darcs /projects/Selection http://openengine.dk/code/projects/Selection
-darcs-dev /projects/Selection fh.daimi.au.dk:/users/cgd/code/projects/Selection
+git /projects/Selection https://github.com/OpenEngineDK/projects-Selection.git
+git-dev /projects/Selection git@github.com:OpenEngineDK/projects-Selection.git
 
 # standard set of extensions
-darcs /extensions/SDL             http://openengine.dk/code/extensions/SDL
-darcs /extensions/OpenGLRenderer  http://openengine.dk/code/extensions/OpenGLRenderer
-darcs /extensions/GenericHandlers http://openengine.dk/code/extensions/GenericHandlers
-darcs /extensions/OBJResource     http://openengine.dk/code/extensions/OBJResource
-darcs /extensions/SDLImage        http://openengine.dk/code/extensions/SDLImage
-darcs /extensions/CairoResource   http://openengine.dk/code/extensions/CairoResource
-darcs /extensions/OpenGLSelection http://openengine.dk/code/extensions/OpenGLSelection
-darcs-dev /extensions/SDL             fh.daimi.au.dk:/users/cgd/code/extensions/SDL
-darcs-dev /extensions/OpenGLRenderer  fh.daimi.au.dk:/users/cgd/code/extensions/OpenGLRenderer
-darcs-dev /extensions/GenericHandlers fh.daimi.au.dk:/users/cgd/code/extensions/GenericHandlers
-darcs-dev /extensions/OBJResource     fh.daimi.au.dk:/users/cgd/code/extensions/OBJResource
-darcs-dev /extensions/SDLImage     fh.daimi.au.dk:/users/cgd/code/extensions/SDLImage
-darcs-dev /extensions/CairoResource   fh.daimi.au.dk:/users/cgd/code/extensions/CairoResource
-darcs-dev /extensions/OpenGLSelection  fh.daimi.au.dk:/users/cgd/code/extensions/OpenGLSelection
+git /extensions/SDL             https://github.com/OpenEngineDK/extensions-SDL.git
+git /extensions/OpenGLRenderer  https://github.com/OpenEngineDK/extensions-OpenGLRenderer.git
+git /extensions/GenericHandlers https://github.com/OpenEngineDK/extensions-GenericHandlers.git
+git /extensions/OBJResource     https://github.com/OpenEngineDK/extensions-OBJResource.git
+git /extensions/SDLImage        https://github.com/OpenEngineDK/extensions-SDLImage.git
+git /extensions/CairoResource   https://github.com/OpenEngineDK/extensions-CairoResource.git
+git /extensions/OpenGLSelection https://github.com/OpenEngineDK/extensions-OpenGLSelection.git
+git-dev /extensions/SDL             git@github.com:OpenEngineDK/extensions-SDL.git
+git-dev /extensions/OpenGLRenderer  git@github.com:OpenEngineDK/extensions-OpenGLRenderer.git
+git-dev /extensions/GenericHandlers git@github.com:OpenEngineDK/extensions-GenericHandlers.git
+git-dev /extensions/OBJResource     git@github.com:OpenEngineDK/extensions-OBJResource.git
+git-dev /extensions/SDLImage     git@github.com:OpenEngineDK/extensions-SDLImage.git
+git-dev /extensions/CairoResource   git@github.com:OpenEngineDK/extensions-CairoResource.git
+git-dev /extensions/OpenGLSelection  git@github.com:OpenEngineDK/extensions-OpenGLSelection.git
 
 # WINDOWS libraries
 win32 /libraries http://openengine.dk/data/libraries/boost-win32.zip
